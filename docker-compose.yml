@@ -2,21 +2,29 @@ version: '3'
 services:
   postgres:
     image: "postgres"
+    networks:
+      - mynetwork
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=root      
     ports:
       - "5432:5432"
     volumes:
-      - ./migration/docker-database-initial.sql:/docker-entrypoint-initdb.d/docker-database-initial.sql   
+      - ./migration/init.sql:/docker-entrypoint-initdb.d/init.sql   
 
   pgadmin-compose:
     image: dpage/pgadmin4
+    networks:
+      - mynetwork
     environment:
-      PGADMIN_DEFAULT_EMAIL: "matheusportugal53@gmail.com"
+      PGADMIN_DEFAULT_EMAIL: "admin@email.com"
       PGADMIN_DEFAULT_PASSWORD: "12345"
     ports:
       - "54321:80"
     depends_on:
       - postgres
+
+networks:
+  mynetwork:
+    driver: bridge
