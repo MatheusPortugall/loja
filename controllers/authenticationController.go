@@ -19,20 +19,20 @@ func Login(c *gin.Context) {
 	}
 	var usuarioBanco models.Usuario
 	database.DB.Where("usuario = ?", usuarioLogin.GetUsuario()).Find(&usuarioBanco)
-	//b.Where("name <> ?", "jinzhu").Find(&users)
 	fmt.Println("AQUI: " + usuarioBanco.GetUsuario())
-
-	if usuarioBanco.GetUsuario() != usuarioLogin.GetUsuario() || usuarioBanco.GetSenha() != usuarioLogin.GetSenha() {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": true, "message": "Nâo autorizado"})
+	ret := bcrypt.CompareHashAndPassword([]byte(usuarioBanco.GetSenha()), []byte(usuarioLogin.GetSenha()))
+	if usuarioBanco.GetUsuario() == usuarioLogin.GetUsuario() && ret == nil {
+		token, err := auth.CreateToken(usuarioLogin.GetId())
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+		c.JSON(http.StatusOK, token)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": true, "message": "Usuário e/ou senha inválidos"})
 		return
 	}
-	token, err := auth.CreateToken(usuarioLogin.GetId())
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, err.Error())
-		return
-	}
-	c.JSON(http.StatusOK, token)
 }
 
 func CriaNovaConta(c *gin.Context) {
@@ -45,7 +45,5 @@ func CriaNovaConta(c *gin.Context) {
 	senhaSemHash := u.GetSenha()
 	u.SetSenhaBcrypt(senhaSemHash)
 	database.DB.Create(&u)
-	ret := bcrypt.CompareHashAndPassword([]byte(u.GetSenha()), []byte(senhaSemHash))
-	fmt.Println(ret)
 	c.JSON(http.StatusOK, u)
 }
