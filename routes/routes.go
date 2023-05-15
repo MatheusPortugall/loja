@@ -5,20 +5,22 @@ import (
 
 	auth "loja/authentication"
 	controllers "loja/controllers"
-	
-	"github.com/gin-contrib/cors"
-		
-	
 )
 
 func HandleRequest() {
 	r := gin.Default()
 
-	// Configurar o middleware CORS
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"*"} // Substitua pelo URL do seu frontend
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
-	r.Use(cors.New(config))
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") 
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Authorization, Content-Type")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
+			return
+		}
+		c.Next()
+	})
 
 	r.GET("/produtos", auth.TokenAuthMiddleware(), controllers.ListaTodosProdutos)
 	r.GET("/produtos/:id", auth.TokenAuthMiddleware(), controllers.ObtemUmProduto)
